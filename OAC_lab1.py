@@ -65,19 +65,19 @@ def get_reg(data):
     for element in regRule:
         if data == element[0]:
             return int(element[1],0)
-    return 0
+    print("An exception occurred in Register:",data)
+    return None
 def get_equal(num,shift):
     return num * 2 ** shift
-    
 def get_hex(line,rule):
     tR =[26,21,16,11,6,0]          #deslocamento do tipo da instrução
-    constLi = [1006698497,875036672]
+    constLi = [1006698497,875036672]  # constante usadas para fazer a instrução Li
     try:
-        for i in range(len(line)):
+        for i in range(len(line)): # Transforma hexadecimal em decimal
             if line[i].find("0x") != -1 and i!=0:
                 line[i] = str(int(line[i],0))
         if line[0]=='li': # Pseudo instrução Li.
-            if int(line[2])<=32767:   # valor aceito na instrução addiu
+            if int(line[2])<=32767:   # valor aceito na faixa da instrução addiu
                 return get_hex(['addiu', line[1], '$zero', line[2]],rule)
             if int(line[2])<=65535:  # valor que precisa de apenas o Ori
                 return hex(872939520+int(line[2]))
@@ -122,7 +122,7 @@ def get_hex(line,rule):
                 return hex(get_equal(Op[0],tR[0])+ get_equal(get_reg(line[1]),tR[1])+ get_equal(Op[1],tR[2])+((65536-(get_equal(get_reg(line[2]),tR[5])*-1)) if get_reg(line[2])<0 else int((line[2]),0))) # Line: op,1,op,2 // OP: 0,1,2,5
             return hex(get_equal(Op[0],tR[0])+get_equal(get_reg(line[2]),tR[1])+get_equal(get_reg(line[1]),tR[2])+((65536-(get_equal(get_reg(line[3]),tR[5])*-1)) if get_reg(line[3])<0 else int((line[3]),0))) # Addiu e Slti OP: 2,1,IMM
     except:
-        print("An exception occurred in instruction",line)
+        print("An exception occurred in instruction:",line)
         return None
 
 path = "arquivos-exemplos/"
@@ -134,14 +134,14 @@ rule = get_code(data_input2)
 regRule = get_regRule(data_input2)
 teste = ['li', '$t0', '65537']
 #teste = ['li', '$f1','$f2','$f3']
-teste2 = ['addiu', '$t0','$zero', '65537']
-teste3 = ['msubu', '$t1','$t2']
+teste2 = ['add', '$t0','$t0', '$t0']
+teste3 = ['c.eq.s', '$f0','$f1']
 
 
 #print(rule,regRule)
 #print("len:",len(teste))
 
-print(get_hex(teste,rule))
+print(get_hex(teste3,rule))
 #print(get_hex(teste2,rule))
 #print(get_hex(teste2,rule))
 #print(get_reg(instructions[5][3]))
