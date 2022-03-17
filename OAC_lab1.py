@@ -59,7 +59,7 @@ def get_regRule(data):
             data_output.append(aux)
             
     return data_output
-def get_reg(data):
+def get_reg(data):   # retorna o número do registrador ex: $zero = 0
     if (data[0] != "$"):
         return int(data)
     for element in regRule:
@@ -82,7 +82,6 @@ def get_hex(line,rule):
             if int(line[2])<=65535:  # valor que precisa de apenas o Ori
                 return hex(872939520+int(line[2]))
             else:  # valor que precisa de duas instruções.
-                print(int(line[2]))
                 return hex(constLi[0]),hex(constLi[1]+int(line[2]))
 
         Op = rule[line[0]]
@@ -125,29 +124,80 @@ def get_hex(line,rule):
         print("An exception occurred in instruction:",line)
         return None
 
-path = "arquivos-exemplos/"
-data_input = open(path+"example_saida.asm",'r').readlines()
-data_input2 = open(path+"dados2.txt",'r').readlines()
 
-instructions = get_text(''.join(data_input))
-rule = get_code(data_input2)
-regRule = get_regRule(data_input2)
-teste = ['li', '$t0', '65537']
-#teste = ['li', '$f1','$f2','$f3']
-teste2 = ['add', '$t0','$t0', '$t0']
-teste3 = ['c.eq.s', '$f0','$f1']
+def save_data_saida(data):
+
+    output_data = open("output/saida_data.mif",'w')
+    address_data = []
+    data_values=[]
+    index = 0
+    DEFAULT_HEADER = """DEPTH = 16384;
+WIDTH = 32;
+ADDRESS_RADIX = HEX;
+DATA_RADIX = HEX;
+CONTENT
+BEGIN\n\n""" 
+    output_data.writelines(DEFAULT_HEADER)
+
+    for key in data:
+        for element in data[key]['data']:
+            data_values.append(np.base_repr(int(element), base = 16).rjust(8,'0'))
+
+    for index in range(0,len(data_values)):
+        address_data.append(np.base_repr(index,base=16).rjust(8,'0'))
+
+    for i,j in zip(address_data,data_values):
+        output_data.writelines(i + ' : ' + j + '\n')
+
+    output_data.writelines('\nEND;')
+    print('Arquivo saida_data.mif salvo com sucesso na pasta output!')
+def get_A(instructions, rule):
+    const_tamI = 4294967295
+    text = []
+    for idx in range(len(instructions)):
+        codeM = get_hex(instructions[idx],rule)
+        if  codeM == None:  # caso ocorra um erro na instrução
+            text.append((hex(const_tamI),"Instruction error"))
+        elif type(codeM) == str and int(codeM,0) >= const_tamI: # caso ocorra um overflow na instrução
+            print("Instruction overflow")
+            text.append((hex(const_tamI),"Instruction error"))
+        else:
+            text.append((codeM,instructions[idx]))
+    return text
+    
+def save_text_saida(data):
+    print("oi mundo")
+    return 0
 
 
-#print(rule,regRule)
-#print("len:",len(teste))
+#------------------------ Main ---------------------------
+path = ["input/","arquivos/"]
+data_input = open(path[0]+"example_saida.asm",'r').readlines()
+data_input2 = open(path[1]+"dados.txt",'r').readlines()
 
-print(get_hex(teste3,rule))
-#print(get_hex(teste2,rule))
-#print(get_hex(teste2,rule))
-#print(get_reg(instructions[5][3]))
+instructions = get_text(''.join(data_input)) # gera as instruções
+data = get_data(data_input)         # gera um dicionario para o .data
+rule = get_code(data_input2)        # dicionario de funções
+regRule = get_regRule(data_input2)  # dicionario de registradores 
+
+save_data_saida(data)
+instructions2 = [['add', '$zero', '$zero', '$zero']]
+text = get_A(instructions,rule)
+for itens in range(len(text)):
+    if type(text[itens]) != tuple:
+        print(text[itens][0].rjust(8, '0'),text[itens][1])
+    else:
+        print(text[itens][0],text[itens][1])
+    
 
 
+#data_values.append(np.base_repr(int(element), base = 16).rjust(8,'0'))
 
+#text_out = []
 #for n in range(len(instructions)):
-#   print(instructions[n])
-#    print(get_hex(instructions[n],rule))
+    #text_out.append( (instructions[n],get_hex(instructions[n],rule)) )
+#    text_out.append( np.base_repr(int(n), base = 16).rjust(8,'0'))
+
+#for itens in range(len(text_out)):#
+#    print(text_out[itens])
+

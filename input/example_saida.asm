@@ -1,10 +1,12 @@
 .data
-a: .word 2, 2, 3, 1, 2, 10
+a: .word 2, 2, 3
 
 .text
+li $t0, 0x10010000
 lw $t1, 0($t0)
 lw $t2, 4($t0)
 lw $t3, 8($t0)
+clo $t1, $t2
 add $t1, $t2, $t3
 xor $t4, $t1, $t2
 Label: addi $t5, $t4, 10
