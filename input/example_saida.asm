@@ -1,5 +1,5 @@
 .data
-a: .word 2, 2, 3
+a: .word 1, 2, 3
 
 .text
 li $t0, 0x10010000

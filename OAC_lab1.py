@@ -18,16 +18,13 @@ def get_data(data):  #revisar
         teste = re.sub("[:., ]"," ",line)
         teste = re.sub(" "," ",teste)
         teste = teste.split()
-        #[expr for item in lista]
 
         if(teste[0]!='data'):
             data_output[str(teste[0])]={'type':teste[1],'data':[int(value) for value in teste[2:]]}
     return (data_output)
 def get_text(source):
-    fix = ['lui','lw','sw','andi','ori','ori','xori','beq','bne','lb','slti','sb']
     instructions = []
     insctructions_text = source.split(".text\n")[1].replace("("," ").replace(")","").replace("Label: ","").splitlines()
-    #print("here:",insctructions_text)
 
     for instruction in insctructions_text:
         instructions.append(instruction.replace(",","").split())
@@ -124,7 +121,24 @@ def get_hex(line,rule):
         print("An exception occurred in instruction:",line)
         return None
 
-
+def get_A(instructions, rule):
+    const_tamI = 4294967295
+    text = []
+    for idx in range(len(instructions)):
+        codeM = get_hex(instructions[idx],rule)
+        if  codeM == None:  # caso ocorra um erro na instrução
+            text.append((hex(const_tamI),"Instruction error"))
+        elif type(codeM) == str and int(codeM,0) >= const_tamI: # caso ocorra um overflow na instrução
+            print("Instruction overflow")
+            text.append((hex(const_tamI),"Instruction error"))
+        else:
+            if type(codeM) != str:
+                print('here')
+                text.append((codeM[0],instructions[idx]))
+                text.append((codeM[1],[]))
+            else:    
+                text.append((codeM,instructions[idx]))
+    return text
 def save_data_saida(data):
 
     output_data = open("output/saida_data.mif",'w')
@@ -150,29 +164,46 @@ BEGIN\n\n"""
         output_data.writelines(i + ' : ' + j + '\n')
 
     output_data.writelines('\nEND;')
-    print('Arquivo saida_data.mif salvo com sucesso na pasta output!')
-def get_A(instructions, rule):
-    const_tamI = 4294967295
-    text = []
+    print('Arquivo saida_data.mif salvo com sucesso na pasta output!')    
+def save_text_saida(data,data2):
+    DEFAULT_HEADER ="""DEPTH = 4096;
+WIDTH = 32;
+ADDRESS_RADIX = HEX;
+DATA_RADIX = HEX;
+CONTENT
+BEGIN\n
+"""
+    output_text = open("output/saida_text.mif",'w')
+    instructions_line = ""
+    instructions = []
+
+    for idx in range(len(data)):
+        instructions_line = str((np.base_repr(idx,base=16).rjust(8,'0'))+" : ")
+        instructions_line = instructions_line + str((np.base_repr(int(data[idx][0],0),base=16).rjust(8, '0')))
+        instructions.append(instructions_line)
+
+
+    for itens in range(len(instructions)):
+        print(instructions[itens])
+
+    flag = False
+    idx=0    
+    for i in range(len(data2)):
+        if flag == True:
+            if data2[i].find("li") != -1:
+                instructions[idx]= instructions[idx]+";  % "+ str(i+1)+" "+data2[i][:-1]+" %"
+                instructions[idx+1]= instructions[idx+1]+";"
+                idx+=2
+            elif len(data2[i])>0:
+                instructions[idx]= instructions[idx]+";  % "+ str(i+1)+" "+data2[i][:-1]+" %"
+                idx+=1
+        elif data2[i].find(".text") != -1:
+            flag = True
+
+    output_text.write(DEFAULT_HEADER)
     for idx in range(len(instructions)):
-        codeM = get_hex(instructions[idx],rule)
-        if  codeM == None:  # caso ocorra um erro na instrução
-            text.append((hex(const_tamI),"Instruction error"))
-        elif type(codeM) == str and int(codeM,0) >= const_tamI: # caso ocorra um overflow na instrução
-            print("Instruction overflow")
-            text.append((hex(const_tamI),"Instruction error"))
-        else:
-            if type(codeM) != str:
-                print('here')
-                text.append((codeM[0],instructions[idx]))
-                text.append((codeM[1],[]))
-            else:    
-                text.append((codeM,instructions[idx]))
-    return text
-    
-def save_text_saida(data):
-    print("oi mundo")
-    return 0
+        output_text.writelines(instructions[idx]+"\n")
+    output_text.writelines("\nEND;")
 
 
 #------------------------ Main ---------------------------
@@ -188,9 +219,9 @@ regRule = get_regRule(data_input2)  # dicionario de registradores
 save_data_saida(data)
 instructions2 = [['add', '$zero', '$zero', '$zero']]
 text = get_A(instructions,rule)
-for itens in range(len(text)):
-    print(type(text[itens][0]))
-    print(np.base_repr(int(text[itens][0],0),base=16).rjust(8, '0'),text[itens][1])
+save_text_saida(text,data_input)
+
+
  
     
 
