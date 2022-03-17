@@ -162,7 +162,12 @@ def get_A(instructions, rule):
             print("Instruction overflow")
             text.append((hex(const_tamI),"Instruction error"))
         else:
-            text.append((codeM,instructions[idx]))
+            if type(codeM) != str:
+                print('here')
+                text.append((codeM[0],instructions[idx]))
+                text.append((codeM[1],[]))
+            else:    
+                text.append((codeM,instructions[idx]))
     return text
     
 def save_text_saida(data):
@@ -184,10 +189,9 @@ save_data_saida(data)
 instructions2 = [['add', '$zero', '$zero', '$zero']]
 text = get_A(instructions,rule)
 for itens in range(len(text)):
-    if type(text[itens]) != tuple:
-        print(text[itens][0].rjust(8, '0'),text[itens][1])
-    else:
-        print(text[itens][0],text[itens][1])
+    print(type(text[itens][0]))
+    print(np.base_repr(int(text[itens][0],0),base=16).rjust(8, '0'),text[itens][1])
+ 
     
 
 
