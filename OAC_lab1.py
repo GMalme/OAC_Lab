@@ -3,7 +3,7 @@ import re
 from xml.dom.minidom import Element
 import numpy as np
 
-def get_data(data):  #revisar 
+def get_data(data): 
     data_output = {}
 
     for line in data:
@@ -31,7 +31,7 @@ def get_text(source):
         
     return instructions
 
-def get_code(data):
+def get_op(data):
     data_output = {}
 
     for line in data:
@@ -41,7 +41,7 @@ def get_code(data):
         data_output[str(aux[0])]=[int(value,0) for value in aux[1:]]
 
     return(data_output)
-def get_regRule(data):
+def get_reg_rule(data):
     data_output = []
     flag = False
     
@@ -59,16 +59,16 @@ def get_regRule(data):
 def get_reg(data):   # retorna o número do registrador ex: $zero = 0
     if (data[0] != "$"):
         return int(data)
-    for element in regRule:
+    for element in reg_rule:
         if data == element[0]:
             return int(element[1],0)
     print("An exception occurred in Register:",data)
     return None
-def get_equal(num,shift):
+def sll(num,shift):
     return num * 2 ** shift
 def get_hex(line,rule):
     tR =[26,21,16,11,6,0]          #deslocamento do tipo da instrução
-    constLi = [1006698497,875036672]  # constante usadas para fazer a instrução Li
+    const_li = [1006698497,875036672]  # constante usadas para fazer a instrução Li
     try:
         for i in range(len(line)): # Transforma hexadecimal em decimal
             if line[i].find("0x") != -1 and i!=0:
@@ -79,65 +79,63 @@ def get_hex(line,rule):
             if int(line[2])<=65535:  # valor que precisa de apenas o Ori
                 return hex(872939520+int(line[2]))
             else:  # valor que precisa de duas instruções.
-                return hex(constLi[0]),hex(constLi[1]+int(line[2]))
+                return hex(const_li[0]),hex(const_li[1]+int(line[2]))
 
-        Op = rule[line[0]]
-        if Op[0] == 0: # tipo R
-            if Op[1]== 3: # sra
-                return hex(get_equal(get_reg(line[2]),tR[2])+get_equal(get_reg(line[1]),tR[3])+get_equal(get_reg(line[3]),tR[4])+Op[1]) # Line: 2,1,3 // Op: 2,3,4
-            if Op[1] == 7: # srav
-                return hex(get_equal(get_reg(line[3]),tR[1])+get_equal(get_reg(line[2]),tR[2])+get_equal(get_reg(line[1]),tR[3])+Op[1]) # Line: 3,2,1 // Op: 1,2,3
-            if Op[1] == 16 or Op[1] ==18:    # mtlo e mthi
-                return hex(get_equal(get_reg(line[1]),tR[3])+Op[1]) # line: 1 // Op: 4(11)
+        op = rule[line[0]]
+        if op[0] == 0: # tipo R
+            if op[1]== 3: # sra
+                return hex(sll(get_reg(line[2]),tR[2])+sll(get_reg(line[1]),tR[3])+sll(get_reg(line[3]),tR[4])+op[1]) # Line: 2,1,3 // Op: 2,3,4
+            if op[1] == 7: # srav
+                return hex(sll(get_reg(line[3]),tR[1])+sll(get_reg(line[2]),tR[2])+sll(get_reg(line[1]),tR[3])+op[1]) # Line: 3,2,1 // Op: 1,2,3
+            if op[1] == 16 or op[1] ==18:    # mtlo e mthi
+                return hex(sll(get_reg(line[1]),tR[3])+op[1]) # line: 1 // Op: 4(11)
             elif len(line) <= 3:  # instruções especiais / tamanho variado
-                if Op[1] == 9:
-                    return  hex(get_equal(get_reg(line[1]),tR[1])+Op[1]+(get_equal(31,tR[3]) if len(line) == 2 else (get_equal(get_reg(line[2]),tR[1]))-get_equal(get_reg(line[1]),tR[1])+get_equal(get_reg(line[1]),tR[3]))) # JalR com apenas 1 registrador
-                return hex(sum([get_equal(get_reg(line[i+1]),tR[i+1]) for i in range(len(line)-1)])+Op[1]) # Line: 1,2,3 // Op: 1,2,3
-            elif Op[1] == 0 or Op[1] == 2: # Sll e srl
-                return hex(get_equal(get_reg(line[2]),tR[2])+get_equal(get_reg(line[1]),tR[3])+get_equal(get_reg(line[3]),tR[4])+Op[1]) # Line: 2,1,3 // Op: 2,3,4
-            return hex(get_equal(get_reg(line[2]),tR[1])+get_equal(get_reg(line[3]),tR[2])+get_equal(get_reg(line[1]),tR[3])+Op[1])  # Line: 2,3,1  // Op: 1,2,3
-        elif Op[0] == 2 or Op[0] == 3: # Tipo J
-            return hex(get_equal(int(Op[0]),26)+np.right_shift(int(line[1],0),2))
-        elif Op[0] == 17: # Instruções .fmt
-            return hex(sum([get_equal(get_reg(line[j+1]),tR[i+2]) for i,j in zip(range(len(line)),range(len(line)-2,-1,-1))])+get_equal(int(Op[0]),tR[0])+int(Op[1])+(get_equal(17,tR[1]) if line[0][-1] == "d" else get_equal(16,tR[1]))) # Line: 3,2,1 // Op: 1,2,3
+                if op[1] == 9:
+                    return  hex(sll(get_reg(line[1]),tR[1])+op[1]+(sll(31,tR[3]) if len(line) == 2 else (sll(get_reg(line[2]),tR[1]))-sll(get_reg(line[1]),tR[1])+sll(get_reg(line[1]),tR[3]))) # JalR com apenas 1 registrador
+                return hex(sum([sll(get_reg(line[i+1]),tR[i+1]) for i in range(len(line)-1)])+op[1]) # Line: 1,2,3 // Op: 1,2,3
+            elif op[1] == 0 or op[1] == 2: # Sll e srl
+                return hex(sll(get_reg(line[2]),tR[2])+sll(get_reg(line[1]),tR[3])+sll(get_reg(line[3]),tR[4])+op[1]) # Line: 2,1,3 // Op: 2,3,4
+            return hex(sll(get_reg(line[2]),tR[1])+sll(get_reg(line[3]),tR[2])+sll(get_reg(line[1]),tR[3])+op[1])  # Line: 2,3,1  // Op: 1,2,3
+        elif op[0] == 2 or op[0] == 3: # Tipo J
+            return hex(sll(int(op[0]),26)+np.right_shift(int(line[1],0),2))
+        elif op[0] == 17: # Instruções .fmt
+            return hex(sum([sll(get_reg(line[j+1]),tR[i+2]) for i,j in zip(range(len(line)),range(len(line)-2,-1,-1))])+sll(int(op[0]),tR[0])+int(op[1])+(sll(17,tR[1]) if line[0][-1] == "d" else sll(16,tR[1]))) # Line: 3,2,1 // Op: 1,2,3
         else: # Instruções tipo I
-            if Op[0] == 43 or Op[0] == 35 or Op[0] == 32 or Op[0] == 40: # Lw,Sw,Lb e Sb
-                return hex(get_equal(Op[0],tR[0])+get_equal(get_reg(line[3]),tR[1])+get_equal(get_reg(line[1]),tR[2])+ int(line[2]))  # Line: 3,1,2 // OP: 0,1,2
-            elif Op[0] == 4 or Op[0] == 5:  # beq e bne
-                return hex(get_equal(Op[0],tR[0])+get_equal(get_reg(line[1]),tR[1])+get_equal(get_reg(line[2]),tR[2])+65536-int(line[3],0)*-1)  # Line: 0,1,2,3 // OP: 0,1,2,3
-            elif Op[0] == 15: # lui
-                return hex(get_equal(Op[0],tR[0])+get_equal(get_reg(line[1]),tR[2])+int(line[2],tR[5])) # Line: 1,2 // OP: 2,5
-            elif Op[0] == 28 and (Op[1] == 0 or Op[1] == 5): # Madd e Msubu
-                print("here")
-                return hex(get_equal(Op[0],tR[0])+get_equal(get_reg(line[1]),tR[1])+get_equal(get_reg(line[2]),tR[2])+Op[1]) #Line: 2,3
-            elif Op[0] == 28 and Op[1] == 2: # mul
-                return hex(get_equal(Op[0],tR[0])+get_equal(get_reg(line[2]),tR[1])+get_equal(get_reg(line[3]),tR[2])+get_equal(get_reg(line[1]),tR[3])+Op[1]) # Line: 2,3,1 
-            elif Op[0] == 28: # clo
-                return hex(get_equal(Op[0],tR[0])+get_equal(get_reg(line[1]),tR[3])+get_equal(get_reg(line[2]),tR[1])+Op[1]) # Line: 1,2 // OP: 3,2
-            elif Op[0] == 1: # bgez e bgezal
-                return hex(get_equal(Op[0],tR[0])+ get_equal(get_reg(line[1]),tR[1])+ get_equal(Op[1],tR[2])+((65536-(get_equal(get_reg(line[2]),tR[5])*-1)) if get_reg(line[2])<0 else int((line[2]),0))) # Line: op,1,op,2 // OP: 0,1,2,5
-            return hex(get_equal(Op[0],tR[0])+get_equal(get_reg(line[2]),tR[1])+get_equal(get_reg(line[1]),tR[2])+((65536-(get_equal(get_reg(line[3]),tR[5])*-1)) if get_reg(line[3])<0 else int((line[3]),0))) # Addiu e Slti OP: 2,1,IMM
+            if op[0] == 43 or op[0] == 35 or op[0] == 32 or op[0] == 40: # Lw,Sw,Lb e Sb
+                return hex(sll(op[0],tR[0])+sll(get_reg(line[3]),tR[1])+sll(get_reg(line[1]),tR[2])+ int(line[2]))  # Line: 3,1,2 // OP: 0,1,2
+            elif op[0] == 4 or op[0] == 5:  # beq e bne
+                return hex(sll(op[0],tR[0])+sll(get_reg(line[1]),tR[1])+sll(get_reg(line[2]),tR[2])+65536-int(line[3],0)*-1)  # Line: 0,1,2,3 // OP: 0,1,2,3
+            elif op[0] == 15: # lui
+                return hex(sll(op[0],tR[0])+sll(get_reg(line[1]),tR[2])+int(line[2],tR[5])) # Line: 1,2 // OP: 2,5
+            elif op[0] == 28 and (op[1] == 0 or op[1] == 5): # Madd e Msubu
+                return hex(sll(op[0],tR[0])+sll(get_reg(line[1]),tR[1])+sll(get_reg(line[2]),tR[2])+op[1]) #Line: 2,3
+            elif op[0] == 28 and op[1] == 2: # mul
+                return hex(sll(op[0],tR[0])+sll(get_reg(line[2]),tR[1])+sll(get_reg(line[3]),tR[2])+sll(get_reg(line[1]),tR[3])+op[1]) # Line: 2,3,1 
+            elif op[0] == 28: # clo
+                return hex(sll(op[0],tR[0])+sll(get_reg(line[1]),tR[3])+sll(get_reg(line[2]),tR[1])+op[1]) # Line: 1,2 // OP: 3,2
+            elif op[0] == 1: # bgez e bgezal
+                return hex(sll(op[0],tR[0])+ sll(get_reg(line[1]),tR[1])+ sll(op[1],tR[2])+((65536-(sll(get_reg(line[2]),tR[5])*-1)) if get_reg(line[2])<0 else int((line[2]),0))) # Line: op,1,op,2 // OP: 0,1,2,5
+            return hex(sll(op[0],tR[0])+sll(get_reg(line[2]),tR[1])+sll(get_reg(line[1]),tR[2])+((65536-(sll(get_reg(line[3]),tR[5])*-1)) if get_reg(line[3])<0 else int((line[3]),0))) # Addiu e Slti OP: 2,1,IMM
     except:
         print("An exception occurred in instruction:",line)
         return None
 
-def get_A(instructions, rule):
-    const_tamI = 4294967295
+def get_assemble(instructions, rule):
+    const_tam = 4294967295
     text = []
     for idx in range(len(instructions)):
-        codeM = get_hex(instructions[idx],rule)
-        if  codeM == None:  # caso ocorra um erro na instrução
-            text.append((hex(const_tamI),"Instruction error"))
-        elif type(codeM) == str and int(codeM,0) >= const_tamI: # caso ocorra um overflow na instrução
+        machine_code = get_hex(instructions[idx],rule)
+        if  machine_code == None:  # caso ocorra um erro na instrução
+            text.append((hex(const_tam),"Instruction error"))
+        elif type(machine_code) == str and int(machine_code,0) >= const_tam: # caso ocorra um overflow na instrução
             print("Instruction overflow")
-            text.append((hex(const_tamI),"Instruction error"))
+            text.append((hex(const_tam),"Instruction error"))
         else:
-            if type(codeM) != str:
-                print('here')
-                text.append((codeM[0],instructions[idx]))
-                text.append((codeM[1],[]))
+            if type(machine_code) != str:
+                text.append((machine_code[0],instructions[idx]))
+                text.append((machine_code[1],[]))
             else:    
-                text.append((codeM,instructions[idx]))
+                text.append((machine_code,instructions[idx]))
     return text
 def save_data_saida(data):
 
@@ -182,20 +180,16 @@ BEGIN\n
         instructions_line = instructions_line + str((np.base_repr(int(data[idx][0],0),base=16).rjust(8, '0')))
         instructions.append(instructions_line)
 
-
-    for itens in range(len(instructions)):
-        print(instructions[itens])
-
     flag = False
     idx=0    
     for i in range(len(data2)):
         if flag == True:
             if data2[i].find("li") != -1:
-                instructions[idx]= instructions[idx]+";  % "+ str(i+1)+" "+data2[i][:-1]+" %"
+                instructions[idx]= instructions[idx]+";  % "+ str(i+1)+": "+data2[i][:-1]+" %"
                 instructions[idx+1]= instructions[idx+1]+";"
                 idx+=2
             elif len(data2[i])>0:
-                instructions[idx]= instructions[idx]+";  % "+ str(i+1)+" "+data2[i][:-1]+" %"
+                instructions[idx]= instructions[idx]+";  % "+ str(i+1)+": "+data2[i][:-1]+" %"
                 idx+=1
         elif data2[i].find(".text") != -1:
             flag = True
@@ -204,35 +198,21 @@ BEGIN\n
     for idx in range(len(instructions)):
         output_text.writelines(instructions[idx]+"\n")
     output_text.writelines("\nEND;")
-
+    print("Arquivo saida_text.mif salvo com sucesso na pasta output!")
+def save_report():
+    print("oi")
 
 #------------------------ Main ---------------------------
 path = ["input/","arquivos/"]
-data_input = open(path[0]+"example_saida.asm",'r').readlines()
-data_input2 = open(path[1]+"dados.txt",'r').readlines()
+report_err = []
+print(report_err)
+data_input = ((open(path[0]+"example_saida.asm",'r').readlines(),open(path[1]+"dados.txt",'r').readlines()))
 
-instructions = get_text(''.join(data_input)) # gera as instruções
-data = get_data(data_input)         # gera um dicionario para o .data
-rule = get_code(data_input2)        # dicionario de funções
-regRule = get_regRule(data_input2)  # dicionario de registradores 
+instructions = get_text(''.join(data_input[0])) # gera as instruções
+data = get_data(data_input[0])           # gera um dicionario para o .data no formato: {'name': {'type': 'word', 'data': [1, 2, 3]}}
+op_rule = get_op(data_input[1])        # dicionario de instruções para o OPcode e Funct
+reg_rule = get_reg_rule(data_input[1])    # dicionario de registradores 
 
 save_data_saida(data)
-instructions2 = [['add', '$zero', '$zero', '$zero']]
-text = get_A(instructions,rule)
-save_text_saida(text,data_input)
-
-
- 
-    
-
-
-#data_values.append(np.base_repr(int(element), base = 16).rjust(8,'0'))
-
-#text_out = []
-#for n in range(len(instructions)):
-    #text_out.append( (instructions[n],get_hex(instructions[n],rule)) )
-#    text_out.append( np.base_repr(int(n), base = 16).rjust(8,'0'))
-
-#for itens in range(len(text_out)):#
-#    print(text_out[itens])
-
+text = get_assemble(instructions,op_rule)
+save_text_saida(text,data_input[0])
