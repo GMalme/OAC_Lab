@@ -202,16 +202,13 @@ BEGIN\n
 def save_report():
     print("oi")
 
-#------------------------ Main ---------------------------
 path = ["input/","arquivos/"]
-report_err = []
-print(report_err)
 data_input = ((open(path[0]+"example_saida.asm",'r').readlines(),open(path[1]+"dados.txt",'r').readlines()))
 
 instructions = get_text(''.join(data_input[0])) # gera as instruções
-data = get_data(data_input[0])           # gera um dicionario para o .data no formato: {'name': {'type': 'word', 'data': [1, 2, 3]}}
-op_rule = get_op(data_input[1])        # dicionario de instruções para o OPcode e Funct
-reg_rule = get_reg_rule(data_input[1])    # dicionario de registradores 
+data = get_data(data_input[0])                  # gera um dicionario para o .data no formato: {'name': {'type': 'word', 'data': [1, 2, 3]}}
+op_rule = get_op(data_input[1])                 # dicionario de instruções para o OPcode e Funct
+reg_rule = get_reg_rule(data_input[1])          # dicionario de registradores 
 
 save_data_saida(data)
 text = get_assemble(instructions,op_rule)
