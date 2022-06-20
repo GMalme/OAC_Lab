@@ -1,3 +1,7 @@
+#UnB - Universidade de Brasília
+#Aluno:     Alexander Matheus de Melo Lima - 120108534
+#Aluno:     Gabriel Martins de Almeida - 190013371
+#Aluno:     Pedro Chaves - 170153835
 import re
 import re
 from xml.dom.minidom import Element
@@ -198,9 +202,11 @@ BEGIN\n
     for idx in range(len(instructions)):
         output_text.writelines(instructions[idx]+"\n")
     output_text.writelines("\nEND;")
+
+    for itens in range(len(instructions)):
+        print(instructions[itens])
+
     print("Arquivo saida_text.mif salvo com sucesso na pasta output!")
-def save_report():
-    print("oi")
 
 path = ["input/","arquivos/"]
 data_input = ((open(path[0]+"example_saida.asm",'r').readlines(),open(path[1]+"dados.txt",'r').readlines()))
